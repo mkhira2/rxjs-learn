@@ -1,26 +1,58 @@
-import { Subject } from "rxjs/Subject";
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
+import { from } from 'rxjs/observable/from';
+import { merge } from 'rxjs/internal/observable/merge';
 
-let subject = new Subject();
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/pluck';
+import 'rxjs/add/operator/skipUntil';
 
-subject.subscribe(
-    data => addItem('Observer 1: ' + data),
-    err => addItem(err),
-    () => addItem('Observer 1 Completed')
-);
+// merge operator
+const mergeObservable1 = Observable.create((observer: any) => {
+    observer.next('Kenji')
+})
 
-subject.next('The first thing has been sent');
+const mergeObservable2 = Observable.create((observer: any) => {
+    observer.next('Hirabayashi')
+})
 
-let observer2 = subject.subscribe(
-    data => addItem('Observer 2: ' + data)
-)
+const mergeObservable3 = merge(mergeObservable1, mergeObservable2);
+mergeObservable3.subscribe((x: any) => addItem(x));
 
-subject.next('The second thing has been sent');
-subject.next('The third thing has been sent');
+// map operator
+Observable.create((observer: any) => {
+    observer.next('Hello world')
+}).map((x: any) => x.toUpperCase())
+.subscribe((x: any) => addItem(x))
 
-observer2.unsubscribe();
+// pluck operator
+from([
+    { first: 'Kenji', last: 'Hirabayashi', age: '32' },
+    { first: 'Jose', last: 'Altuve', age: '29' },
+    { first: 'Carlos', last: 'Correa', age: '24' }
+]).pluck('last')
+.subscribe((x: any) => addItem(x));
 
-subject.next('The fourth thing has been sent');
+// skipUntil operator
+const skipuntilObservable1 = Observable.create((observer: any) => {
+    let i = 1;
+    setInterval(() => {
+        observer.next(i++)
+    }, 1000)
+})
 
+const skipuntilObservable2 = new Subject;
+
+setTimeout(() => {
+    skipuntilObservable2.next('Howdy')
+}, 5000)
+
+const skipuntilObservable3 = skipuntilObservable1.skipUntil(skipuntilObservable2)
+
+skipuntilObservable1.subscribe((x: any) => addItem(x));
+skipuntilObservable3.subscribe((x: any) => addItem(x));
+
+// util method
 function addItem(val: any) {
     const node = document.createElement('li');
     const textNode = document.createTextNode(val);
